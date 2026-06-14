@@ -12,6 +12,10 @@ on:
       - main          # runs when someone raises a PR to main
   workflow_dispatch:  # adds a manual "Run workflow" button in GitHub UI
 
+# ✅ ADD THIS — forces Node.js 24 for all actions
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 # ===== WHAT TO RUN =====
 jobs:
 
@@ -34,7 +38,7 @@ jobs:
 
       # Step 3 — install Chrome browser on the runner
       - name: Set Up Chrome
-        uses: browser-actions/setup-chrome@v1
+        uses: browser-actions/setup-chrome@latest
         with:
           chrome-version: stable
 
