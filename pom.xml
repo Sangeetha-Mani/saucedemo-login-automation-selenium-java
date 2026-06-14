@@ -41,7 +41,11 @@
     <version>3.5.3</version>
     <configuration>
         <suiteXmlFiles>
+        <suiteXmlFile>${suiteXMLFile}</suiteXmlFile>
+        <properties>
             <suiteXmlFile>testng.xml</suiteXmlFile>
+        </properties>
+            
         </suiteXmlFiles>
     </configuration>
 </plugin>

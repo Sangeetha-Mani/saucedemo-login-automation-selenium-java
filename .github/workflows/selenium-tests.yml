@@ -1,0 +1,100 @@
+# Name shown in GitHub Actions dashboard
+name: Selenium Test Suite
+
+# ===== WHEN TO TRIGGER =====
+on:
+  push:
+    branches:
+      - main          # runs when you push to main branch
+      - develop       # runs when you push to develop branch
+  pull_request:
+    branches:
+      - main          # runs when someone raises a PR to main
+  workflow_dispatch:  # adds a manual "Run workflow" button in GitHub UI
+
+# ===== WHAT TO RUN =====
+jobs:
+
+  smoke-tests:
+    name: Smoke Tests
+    runs-on: ubuntu-latest    # GitHub's Linux server (free, fast)
+    
+    steps:
+    
+      # Step 1 — download your code onto the runner
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step 2 — install Java 21 (matches your local java.version)
+      - name: Set Up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      # Step 3 — install Chrome browser on the runner
+      - name: Set Up Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      # Step 4 — cache Maven dependencies
+      # like node_modules caching in React CI — speeds up builds
+      - name: Cache Maven Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      # Step 5 — actually run your tests
+      - name: Run Smoke Tests
+        run: mvn clean test -DsuiteXmlFile=smoke-testng.xml
+
+      # Step 6 — upload test results even if tests fail
+      - name: Upload Test Results
+        if: always()    # runs even when tests fail
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-results
+          path: target/surefire-reports/
+
+  regression-tests:
+    name: Regression Tests
+    runs-on: ubuntu-latest
+    needs: smoke-tests    # waits for smoke to pass before starting regression
+
+    steps:
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set Up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Set Up Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Cache Maven Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Run Regression Tests
+        run: mvn clean test -DsuiteXmlFile=regression-testng.xml
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regression-test-results
+          path: target/surefire-reports/
